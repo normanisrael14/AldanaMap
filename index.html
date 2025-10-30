@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mapa Creativo con Iconos Rediseñados - Mar del Plata</title>
+    
+    <!-- 1. CSS de Leaflet -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+          crossorigin=""/>
+
+    <!-- 2. Estilos personalizados -->
+    <style>
+        body {
+            padding: 0;
+            margin: 0;
+        }
+        html, body, #map {
+            height: 100%;
+            width: 100vw;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .custom-popup {
+            font-size: 13px;
+            line-height: 1.4;
+            max-width: 300px;
+        }
+        .custom-popup h3 {
+            margin: 0 0 8px 0;
+            font-size: 16px;
+            color: #0056b3;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+        .custom-popup img {
+            max-width: 100%;
+            border-radius: 4px;
+            margin-top: 8px;
+        }
+        /* Estilos para el panel de control */
+        #control-panel {
+            position: fixed;
+            top: 15px;
+            left: 15px;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.95);
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            width: 280px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        #control-panel h4 {
+            margin-top: 0;
+            border-bottom: 1px solid #ccc;
+            padding-bottom: 8px;
+        }
+        #control-panel .tool-section {
+            border-bottom: 1px dashed #ddd;
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+        }
+        #control-panel .tool-section:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        #control-panel label {
+            display: block;
+            margin-top: 10px;
+            font-weight: bold;
+            font-size: 13px;
+        }
+        #control-panel input[type="text"], #control-panel textarea, #control-panel select {
+            width: 100%;
+            padding: 8px;
+            margin-top: 4px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        #control-panel input[type="url"] {
+            width: 100%;
+            padding: 8px;
+            margin-top: 4px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        #control-panel input[type="file"] {
+            width: 100%;
+            padding: 6px 0;
+            margin-top: 4px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        #control-panel button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        #control-panel button:hover {
+            background-color: #0056b3;
+        }
+        #control-panel button.active-mode {
+            background-color: #dc3545; /* Rojo para modo activo */
+        }
+        #control-panel button.active-mode:hover {
+            background-color: #c82333;
+        }
+        #control-panel .save-load-btn {
+            background-color: #28a745; /* Verde para guardar */
+        }
+        #control-panel .save-load-btn:hover {
+            background-color: #218838;
+        }
+        #control-panel .export-btn {
+            background-color: #17a2b8; /* Azul claro para exportar */
+        }
+        #control-panel .export-btn:hover {
+            background-color: #138496;
+        }
+        #control-panel .import-btn {
+            background-color: #ffc107; /* Amarillo para importar */
+            color: #212529;
+        }
+        #control-panel .import-btn:hover {
+            background-color: #e0a800;
+        }
+        #control-panel .clear-btn {
+            background-color: #6c757d; /* Gris para limpiar */
+        }
+        #control-panel .clear-btn:hover {
+            background-color: #5a6268;
+        }
+        #control-panel .image-btn {
+            background-color: #6f42c1; /* Púrpura para imágenes */
+        }
+        #control-panel .image-btn:hover {
+            background-color: #5a32a3;
+        }
+        .url-preview-container {
+            position: relative;
+            margin-top: 10px;
+        }
+        .url-preview-btn {
+            position: absolute;
+            right: 5px;
+            top: 5px;
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            border: none;
+            border-radius: 3px;
+            padding: 3px 6px;
+            cursor: pointer;
+            font-size: 12px;
+            z-index: 10;
+        }
+        /* Estilos para los iconos de emoji */
+        .emoji-div-icon {
+            background: transparent;
+            border: none;
+        }
+        .emoji-icon {
+            font-size: 28px;
+            line-height: 1;
+            text-align: center;
+            display: block;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-shadow: 1px 1px 2px black, -1px -1px 2px black, 1px -1px 2px black, -1px 1px 2px black;
+        }
+        /* Estilos para el icono de cuadro de texto */
+        .text-box-wrapper {
+            position: relative; width: 0; height: 0;
+        }
+        .text-box-icon {
+            background: rgba(255, 255, 224, 0.9);
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            padding: 8px 12px;
+            font-size: 14px;
+            font-weight: bold;
+            color: #333;
+            box-shadow: 3px 3px 10px rgba(0, 0, 0, 0.4);
+            max-width: 250px;
+            text-align: center;
+            white-space: pre-wrap;
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translate(-50%, -100%);
+        }
+        /* Estilos para notificaciones */
+        .notification {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 15px 20px;
+            border-radius: 5px;
+            z-index: 2000;
+            max-width: 300px;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .notification.show {
+            opacity: 1;
+        }
+        /* Estilos para el indicador de carga */
+        .loading-indicator {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+        /* Estilos para las miniaturas de imágenes con descripción */
+        .image-thumbnail-container {
+            width: 80px;
+            background-color: white;
+            border-radius: 6px;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease, z-index 0.2s ease;
+            transform-origin: bottom center;
+            position: relative;
+            z-index: 10;
+        }
+        .image-thumbnail-container:hover {
+            transform: scale(1.8);
+            box-shadow: 0 8px 20px rgba(0,0,0,0.4);
+            z-index: 1000;
+        }
+        .image-thumbnail-container img {
+            width: 100%;
+            height: 60px;
+            object-fit: cover;
+            display: block;
+            transition: height 0.2s ease;
+        }
+        .image-thumbnail-container:hover img {
+            height: 120px;
+        }
+        .image-thumbnail-container .description {
+            padding: 4px 6px;
+            font-size: 9px;
+            color: #333;
+            text-align: center;
+            background-color: rgba(255, 255, 255, 0.9);
+            line-height: 1.2;
+            max-height: 30px;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            transition: font-size 0.2s ease, padding 0.2s ease, max-height 0.2s ease;
+        }
+        .image-thumbnail-container:hover .description {
+            font-size: 12px;
+            padding: 8px 10px;
+            max-height: 60px;
+            -webkit-line-clamp: 3;
+        }
+        /* Estilos para el popup de imagen completa */
+        .image-popup {
+            max-width: 350px;
+        }
+        .image-popup img {
+            width: 100%;
+            border-radius: 4px;
+            margin-bottom: 10px;
+        }
+        .image-popup .description {
+            font-size: 14px;
+            color: #333;
+            text-align: center;
+            padding: 8px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+        }
+        /* Estilos para la cruz de puntos cardinales */
+        .compass-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            width: 100px;
+            height: 100px;
+            z-index: 999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .compass-cross {
+            position: relative;
+            width: 80px;
+            height: 80px;
+        }
+        /* Líneas de la cruz */
+        .cross-horizontal, .cross-vertical {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.7);
+            border-radius: 2px;
+        }
+        .cross-horizontal {
+            top: 50%;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            transform: translateY(-50%);
+        }
+        .cross-vertical {
+            left: 50%;
+            top: 0;
+            width: 4px;
+            height: 100%;
+            transform: translateX(-50%);
+        }
+        /* Centro de la cruz */
+        .cross-center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 12px;
+            height: 12px;
+            background: #333;
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 2;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+        }
+        /* Puntos cardinales */
+        .cardinal-point {
+            position: absolute;
+            width: 24px;
+            height: 24px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 12px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        .cardinal-n {
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            color: #ff0000;
+            font-size: 14px;
+        }
+        .cardinal-s {
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+        .cardinal-e {
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        .cardinal-w {
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+        }
+        /* Fondo semitransparente */
+        .compass-bg {
+            position: absolute;
+            top: -10px;
+            left: -10px;
+            right: -10px;
+            bottom: -10px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            z-index: -1;
+        }
+        /* Estilos para los nuevos banderines rectangulares */
+        .beach-flag {
+            position: relative;
+            width: 20px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .beach-flag::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 3px;
+            height: 40px;
+            background: #8B4513; /* Color marrón para el poste */
+            z-index: 1;
+        }
+        .beach-flag-green {
+            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+            width: 18px;
+            height: 14px;
+            position: absolute;
+            right: 0;
+            top: 5px;
+            border-radius: 2px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        .beach-flag-yellow {
+            background: linear-gradient(135deg, #ffc107 0%, #ffeb3b 100%);
+            width: 18px;
+            height: 14px;
+            position: absolute;
+            right: 0;
+            top: 5px;
+            border-radius: 2px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        .beach-flag-red {
+            background: linear-gradient(135deg, #dc3545 0%, #ff6b6b 100%);
+            width: 18px;
+            height: 14px;
+            position: absolute;
+            right: 0;
+            top: 5px;
+            border-radius: 2px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        /* Estilos para el icono de salvavidas */
+        .lifeguard-icon {
+            position: relative;
+            width: 30px;
+            height: 30px;
+        }
+        .lifeguard-person {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 8px;
+            height: 12px;
+            background: #ff6b35;
+            border-radius: 4px 4px 0 0;
+        }
+        .lifeguard-person::before {
+            content: '';
+            position: absolute;
+            top: -6px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 6px;
+            height: 6px;
+            background: #ff6b35;
+            border-radius: 50%;
+        }
+        .lifeguard-buoy {
+            position: absolute;
+            bottom: 2px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 20px;
+            height: 8px;
+            background: linear-gradient(90deg, #ff0000 0%, #ffffff 25%, #ff0000 50%, #ffffff 75%, #ff0000 100%);
+            border-radius: 50%;
+            border: 1px solid #333;
+            z-index: -1;
+        }
+        /* Estilos para el icono de información */
+        .info-icon {
+            width: 30px;
+            height: 30px;
+            background: #17a2b8;
+            border-radius: 50%;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        /* Ajuste para pantallas pequeñas */
+        @media (max-width: 768px) {
+            .compass-container {
+                width: 80px;
+                height: 80px;
+                top: 10px;
+                right: 10px;
+            }
+            .compass-cross {
+                width: 60px;
+                height: 60px;
+            }
+            .cross-horizontal {
+                height: 3px;
+            }
+            .cross-vertical {
+                width: 3px;
+            }
+            .cross-center {
+                width: 8px;
+                height: 8px;
+            }
+            .cardinal-point {
+                width: 20px;
+                height: 20px;
+                font-size: 10px;
+            }
+            .cardinal-n {
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 3. Contenedor del mapa -->
+    <div id="map"></div>
+
+    <!-- Cruz con puntos cardinales -->
+    <div class="compass-container">
+        <div class="compass-cross">
+            <div class="compass-bg"></div>
+            <div class="cross-horizontal"></div>
+            <div class="cross-vertical"></div>
+            <div class="cross-center"></div>
+            <div class="cardinal-point cardinal-n">N</div>
+            <div class="cardinal-point cardinal-s">S</div>
+            <div class="cardinal-point cardinal-e">E</div>
+            <div class="cardinal-point cardinal-w">O</div>
+        </div>
+    </div>
+
+    <!-- 4. Panel de Control -->
+    <div id="control-panel">
+        <!-- Sección de Imágenes -->
+        <div class="tool-section">
+            <h4>Agregar Imagen con Descripción</h4>
+            <label for="image-url">URL de la Imagen:</label>
+            <input type="url" id="image-url" placeholder="https://ejemplo.com/imagen.jpg">
+            <div class="url-preview-container">
+                <img id="img-preview" alt="Vista previa de la imagen" style="max-width: 100%; max-height: 100px; display: none;">
+                <button id="clear-img-btn" class="url-preview-btn" style="display: none;">Limpiar</button>
+                <div id="loading-indicator" class="loading-indicator"></div>
+            </div>
+            
+            <label for="image-desc">Descripción:</label>
+            <textarea id="image-desc" rows="3" placeholder="Agrega una descripción para la imagen..."></textarea>
+            
+            <button id="add-image-btn" class="image-btn">Agregar Imagen al Mapa</button>
+        </div>
+
+        <!-- Sección de Dibujo de Líneas -->
+        <div class="tool-section">
+            <h4>Dibujar Líneas</h4>
+            <label for="line-color">Color de la Línea:</label>
+            <select id="line-color">
+                <option value="#FF0000">Rojo</option>
+                <option value="#0000FF">Azul</option>
+                <option value="#008000">Verde</option>
+                <option value="#FFA500">Naranja</option>
+                <option value="#800080">Morado</option>
+            </select>
+            <label for="line-width">Grosor de la Línea:</label>
+            <select id="line-width">
+                <option value="3">Fina</option>
+                <option value="6" selected>Media</option>
+                <option value="10">Gruesa</option>
+            </select>
+            <button id="draw-line-btn">Agregar Líneas</button>
+        </div>
+
+        <!-- Sección de Emojis -->
+        <div class="tool-section">
+            <h4>Agrega Emojis</h4>
+            <label for="emoji-select">Selecciona un Emoji:</label>
+            <select id="emoji-select">
+                <option value="📍">📍 Marcador</option>
+                <option value="🏖️">🏖️ Playa</option>
+                <option value="🏨">🏨 Hotel</option>
+                <option value="🍕">🍕 Pizza</option>
+                <option value="🍔">🍔 Hamburguesa</option>
+                <option value="🍺">🍺 Cerveza</option>
+                <option value="☕">☕ Café</option>
+                <option value="🎣">🎣 Pesca</option>
+                <option value="🏄‍♂️">🏄‍♂️ Surf</option>
+                <option value="🚲">🚲 Bici</option>
+                <option value="🌳">🌳 Parque</option>
+                <option value="🎡">🎡 Noria</option>
+                <option value="🎪">🎪 Circo</option>
+                <option value="🏛️">🏛️ Museo</option>
+                <option value="🎭">🎭 Teatro</option>
+                <option value="⚽">⚽ Fútbol</option>
+                <option value="🏀">🏀 Básquet</option>
+                <option value="🎉">🎉 Fiesta</option>
+                <option value="❤️">❤️ Favorito</option>
+                <option value="⭐">⭐ Importante</option>
+                <option value="📸">📸 Foto</option>
+                <option value="🚗">🚗 Auto</option>
+                <option value="🅿️">🅿️ Estacionamiento</option>
+                <option value="🚻">🚻 Baño</option>
+                <option value="🏥">🏥 Hospital</option>
+                <option value="🚨">🚨 Peligro</option>
+                <option value="💰">💰 Dinero</option>
+                <option value="beach-flag-green">🚩 Banderín Verde</option>
+                <option value="beach-flag-yellow">🚩 Banderín Amarillo</option>
+                <option value="beach-flag-red">🚩 Banderín Rojo</option>
+                <option value="🏊">🏊 Persona Nadando</option>
+                <option value="lifeguard">👨‍🚒 Salvavidas</option>
+                <option value="ℹ️">ℹ️ Información</option>
+            </select>
+            <button id="add-emoji-btn">Agregar Emojis</button>
+        </div>
+
+        <!-- Sección de Iconos Policiales -->
+        <div class="tool-section">
+            <h4>Colocar Iconos Policiales</h4>
+            <p style="font-size: 12px; color: #555;">Haz clic en el mapa para señalar comisarías o puestos de control</p>
+            <button id="add-police-btn">Agrega Icono Policial</button>
+        </div>
+
+        <!-- Sección de Cuadros de Texto -->
+        <div class="tool-section">
+            <h4>Colocar Cuadro de Texto</h4>
+            <label for="text-input">Escribe tu texto:</label>
+            <textarea id="text-input" rows="3" placeholder="Este texto aparecerá en un cuadro sobre el mapa..."></textarea>
+            <button id="add-text-btn">Agrega Texto</button>
+        </div>
+
+        <!-- Sección de Guardado y Carga -->
+        <div class="tool-section">
+            <h4>Guardar y Cargar Mapa</h4>
+            <button id="save-map-btn" class="save-load-btn">Guardar Mapa</button>
+            <button id="load-map-btn" class="save-load-btn">Cargar Último Guardado</button>
+            <button id="clear-map-btn" class="clear-btn">Borrar Todo y Empezar de Nuevo</button>
+        </div>
+
+        <!-- Sección de Exportación e Importación -->
+        <div class="tool-section">
+            <h4>Compartir Mapa</h4>
+            <button id="export-map-btn" class="export-btn">Exportar Mapa como Archivo</button>
+            <input type="file" id="import-map-file" accept=".json" style="display: none;">
+            <button id="import-map-btn" class="import-btn">Importar Mapa desde Archivo</button>
+            <button id="generate-standalone-btn" class="export-btn">Generar HTML Autónomo</button>
+        </div>
+    </div>
+
+    <!-- Notificación -->
+    <div id="notification" class="notification"></div>
+
+    <!-- 5. JavaScript de Leaflet -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+            crossorigin=""></script>
+
+    <script>
+        // --- INICIALIZACIÓN DEL MAPA Y VARIABLES GLOBALES ---
+        var map = L.map('map').setView([-38.0023, -57.5759], 12);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            maxZoom: 19,
+            attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+        }).addTo(map);
+
+        var mapData = []; // Array para almacenar todos los elementos del mapa
+        var drawnItems = new L.FeatureGroup(); // Grupo de capas para los elementos dibujados
+        map.addLayer(drawnItems);
+
+        // --- MANEJO DE ESTADOS DE LAS HERRAMIENTAS ---
+        var currentTool = 'none';
+        var addImageBtn = document.getElementById('add-image-btn');
+        var drawLineBtn = document.getElementById('draw-line-btn');
+        var addEmojiBtn = document.getElementById('add-emoji-btn');
+        var addPoliceBtn = document.getElementById('add-police-btn');
+        var addTextBtn = document.getElementById('add-text-btn');
+
+        function deactivateAllTools() {
+            currentTool = 'none';
+            map.getContainer().style.cursor = '';
+            // Resetear textos de botones
+            addImageBtn.textContent = 'Agregar Imagen al Mapa'; addImageBtn.classList.remove('active-mode');
+            drawLineBtn.textContent = 'Agregar Líneas'; drawLineBtn.classList.remove('active-mode');
+            addEmojiBtn.textContent = 'Agregar Emojis'; addEmojiBtn.classList.remove('active-mode');
+            addPoliceBtn.textContent = 'Agrega Icono Policial'; addPoliceBtn.classList.remove('active-mode');
+            addTextBtn.textContent = 'Agrega Texto'; addTextBtn.classList.remove('active-mode');
+            // Limpiar estado de dibujo de líneas
+            if (isDrawingLine && tempLine) { map.removeLayer(tempLine); }
+            isDrawingLine = false; currentLinePoints = [];
+        }
+
+        // --- LÓGICA PARA AÑADIR IMÁGENES ---
+        var imageUrlInput = document.getElementById('image-url');
+        var imageDescInput = document.getElementById('image-desc');
+        var imgPreview = document.getElementById('img-preview');
+        var clearImgBtn = document.getElementById('clear-img-btn');
+        var loadingIndicator = document.getElementById('loading-indicator');
+        var imageUrl = null;
+        var imageLoadTimeout = null;
+
+        // Función para validar y cargar la imagen desde URL
+        function loadImageFromUrl(url) {
+            // Limpiar timeout anterior si existe
+            if (imageLoadTimeout) {
+                clearTimeout(imageLoadTimeout);
+            }
+            
+            // Mostrar indicador de carga
+            loadingIndicator.style.display = 'block';
+            imgPreview.style.display = 'none';
+            clearImgBtn.style.display = 'none';
+            
+            // Crear una nueva imagen para verificar si la URL es válida
+            var testImg = new Image();
+            
+            // Establecer un timeout para evitar esperas largas
+            imageLoadTimeout = setTimeout(function() {
+                loadingIndicator.style.display = 'none';
+                showNotification('La imagen está tardando demasiado en cargar. Verifica la URL.');
+            }, 5000);
+            
+            testImg.onload = function() {
+                // La imagen se cargó correctamente
+                clearTimeout(imageLoadTimeout);
+                loadingIndicator.style.display = 'none';
+                imgPreview.src = url;
+                imgPreview.style.display = 'block';
+                clearImgBtn.style.display = 'block';
+                imageUrl = url;
+            };
+            
+            testImg.onerror = function() {
+                // Error al cargar la imagen
+                clearTimeout(imageLoadTimeout);
+                loadingIndicator.style.display = 'none';
+                showNotification('No se pudo cargar la imagen. Verifica la URL e intenta de nuevo.');
+                imageUrl = null;
+            };
+            
+            // Iniciar la carga de la imagen
+            testImg.src = url;
+        }
+
+        // Evento para detectar cambios en el campo de URL
+        imageUrlInput.addEventListener('input', function() {
+            var url = imageUrlInput.value.trim();
+            
+            if (url === '') {
+                // Si el campo está vacío, ocultar la vista previa
+                imgPreview.style.display = 'none';
+                clearImgBtn.style.display = 'none';
+                imageUrl = null;
+                return;
+            }
+            
+            // Validar que sea una URL
+            if (!url.match(/^https?:\/\/.+/)) {
+                showNotification('Por favor, ingresa una URL válida que comience con http:// o https://');
+                return;
+            }
+            
+            // Intentar cargar la imagen
+            loadImageFromUrl(url);
+        });
+
+        // Evento para limpiar la imagen
+        clearImgBtn.addEventListener('click', function() {
+            imageUrlInput.value = '';
+            imgPreview.style.display = 'none';
+            clearImgBtn.style.display = 'none';
+            imageUrl = null;
+        });
+
+        addImageBtn.addEventListener('click', function() {
+            if (currentTool === 'image') { deactivateAllTools(); }
+            else { deactivateAllTools(); currentTool = 'image'; map.getContainer().style.cursor = 'crosshair'; addImageBtn.textContent = 'Cancelar...'; addImageBtn.classList.add('active-mode'); }
+        });
+
+        // --- LÓGICA PARA DIBUJAR LÍNEAS ---
+        var lineColorSelect = document.getElementById('line-color');
+        var lineWidthSelect = document.getElementById('line-width');
+        var isDrawingLine = false;
+        var currentLinePoints = [];
+        var tempLine;
+
+        drawLineBtn.addEventListener('click', function() {
+            if (currentTool === 'line') { deactivateAllTools(); }
+            else { deactivateAllTools(); currentTool = 'line'; map.getContainer().style.cursor = 'crosshair'; drawLineBtn.textContent = 'Cancelar...'; drawLineBtn.classList.add('active-mode'); }
+        });
+
+        // --- LÓGICA PARA COLOCAR EMOJIS ---
+        var emojiSelect = document.getElementById('emoji-select');
+        addEmojiBtn.addEventListener('click', function() {
+            if (currentTool === 'emoji') { deactivateAllTools(); }
+            else { deactivateAllTools(); currentTool = 'emoji'; map.getContainer().style.cursor = 'crosshair'; addEmojiBtn.textContent = 'Cancelar...'; addEmojiBtn.classList.add('active-mode'); }
+        });
+
+        // --- LÓGICA PARA COLOCAR ICONOS POLICIALES ---
+        var iconoPolicia = L.icon({
+            iconUrl: 'https://cdn-icons-png.flaticon.com/512/5600/5600529.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+            iconSize: [40, 40], iconAnchor: [20, 40], popupAnchor: [0, -40], shadowSize: [41, 41]
+        });
+        addPoliceBtn.addEventListener('click', function() {
+            if (currentTool === 'police') { deactivateAllTools(); }
+            else { deactivateAllTools(); currentTool = 'police'; map.getContainer().style.cursor = 'crosshair'; addPoliceBtn.textContent = 'Cancelar...'; addPoliceBtn.classList.add('active-mode'); }
+        });
+
+        // --- LÓGICA PARA COLOCAR CUADROS DE TEXTO ---
+        var textInput = document.getElementById('text-input');
+        addTextBtn.addEventListener('click', function() {
+            if (currentTool === 'text') { deactivateAllTools(); }
+            else { deactivateAllTools(); currentTool = 'text'; map.getContainer().style.cursor = 'crosshair'; addTextBtn.textContent = 'Cancelar...'; addTextBtn.classList.add('active-mode'); }
+        });
+
+        // --- LÓGICA DE GUARDADO, CARGA Y LIMPIEZA ---
+        document.getElementById('save-map-btn').addEventListener('click', saveMapData);
+        document.getElementById('load-map-btn').addEventListener('click', loadMapData);
+        document.getElementById('clear-map-btn').addEventListener('click', clearMap);
+
+        // --- LÓGICA DE EXPORTACIÓN E IMPORTACIÓN ---
+        document.getElementById('export-map-btn').addEventListener('click', exportMapData);
+        document.getElementById('import-map-btn').addEventListener('click', function() {
+            document.getElementById('import-map-file').click();
+        });
+        document.getElementById('import-map-file').addEventListener('change', importMapData);
+        document.getElementById('generate-standalone-btn').addEventListener('click', generateStandaloneHTML);
+
+        function showNotification(message, duration = 3000) {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.classList.add('show');
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, duration);
+        }
+
+        function saveMapData() {
+            // Limpiar datos anteriores y guardar el estado actual de las capas
+            mapData = [];
+            drawnItems.eachLayer(function(layer) {
+                if (layer instanceof L.Marker) {
+                    var item = { type: 'marker', latlng: layer.getLatLng() };
+                    
+                    // Guardar información del icono
+                    if (layer.options.icon && layer.options.icon.options) {
+                        if (layer.options.icon.options.iconUrl) {
+                            item.iconUrl = layer.options.icon.options.iconUrl;
+                            item.iconSize = layer.options.icon.options.iconSize;
+                            item.iconAnchor = layer.options.icon.options.iconAnchor;
+                            item.shadowUrl = layer.options.icon.options.shadowUrl;
+                            item.shadowSize = layer.options.icon.options.shadowSize;
+                        } else if (layer.options.icon.options.html) {
+                            // Para emojis, cuadros de texto e imágenes
+                            item.html = layer.options.icon.options.html;
+                            item.className = layer.options.icon.options.className;
+                            item.iconSize = layer.options.icon.options.iconSize;
+                            item.iconAnchor = layer.options.icon.options.iconAnchor;
+                        }
+                    }
+                    
+                    // Guardar contenido del popup
+                    if (layer.getPopup()) {
+                        item.popupContent = layer.getPopup().getContent();
+                    }
+                    
+                    mapData.push(item);
+                } else if (layer instanceof L.Polyline) {
+                    mapData.push({ 
+                        type: 'line', 
+                        latlngs: layer.getLatLngs(), 
+                        color: layer.options.color, 
+                        weight: layer.options.weight,
+                        opacity: layer.options.opacity,
+                        dashArray: layer.options.dashArray
+                    });
+                }
+            });
+            
+            // Guardar información adicional
+            mapData.push({
+                type: 'metadata',
+                center: map.getCenter(),
+                zoom: map.getZoom(),
+                timestamp: new Date().toISOString()
+            });
+            
+            localStorage.setItem('mapData', JSON.stringify(mapData));
+            showNotification('¡Mapa guardado exitosamente!');
+        }
+
+        function loadMapData() {
+            var savedData = localStorage.getItem('mapData');
+            if (savedData) {
+                clearMap(false); // Limpiar el mapa sin mostrar alerta
+                mapData = JSON.parse(savedData);
+                renderMapData(mapData);
+                showNotification('¡Mapa cargado exitosamente!');
+            } else {
+                showNotification('No hay datos guardados para cargar.');
+            }
+        }
+
+        function renderMapData(data) {
+            data.forEach(function(item) {
+                var layer;
+                
+                if (item.type === 'marker') {
+                    var icon;
+                    
+                    if (item.iconUrl) {
+                        // Icono personalizado (ej: policía)
+                        icon = L.icon({
+                            iconUrl: item.iconUrl,
+                            shadowUrl: item.shadowUrl || 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/images/marker-shadow.png',
+                            iconSize: item.iconSize || [40, 40],
+                            iconAnchor: item.iconAnchor || [20, 40],
+                            shadowSize: item.shadowSize || [41, 41]
+                        });
+                    } else if (item.html) {
+                        // Emoji, cuadro de texto o imagen
+                        icon = L.divIcon({
+                            html: item.html,
+                            className: item.className || 'emoji-div-icon',
+                            iconSize: item.iconSize || [30, 30],
+                            iconAnchor: item.iconAnchor || [15, 15]
+                        });
+                    } else {
+                        // Marcador por defecto
+                        icon = new L.Icon.Default();
+                    }
+                    
+                    layer = L.marker(item.latlng, { icon: icon });
+                    
+                    if (item.popupContent) {
+                        layer.bindPopup(item.popupContent);
+                    }
+                    
+                    addHoverLogic(layer);
+                } else if (item.type === 'line') {
+                    layer = L.polyline(item.latlngs, {
+                        color: item.color,
+                        weight: item.weight,
+                        opacity: item.opacity,
+                        dashArray: item.dashArray
+                    });
+                } else if (item.type === 'metadata') {
+                    // Restaurar vista del mapa
+                    map.setView(item.center, item.zoom);
+                }
+                
+                if (layer) {
+                    drawnItems.addLayer(layer);
+                }
+            });
+        }
+
+        function clearMap(showAlert = true) {
+            if (showAlert && !confirm('¿Estás seguro de que quieres borrar todo el mapa y los datos guardados?')) {
+                return;
+            }
+            drawnItems.clearLayers();
+            mapData = [];
+            localStorage.removeItem('mapData');
+            if (showAlert) {
+                showNotification('Mapa y datos guardados borrados.');
+            }
+        }
+
+        function exportMapData() {
+            // Primero guardar los datos actuales
+            saveMapData();
+            
+            // Crear un objeto con todos los datos del mapa
+            const exportData = {
+                version: '1.0',
+                mapData: mapData,
+                exportDate: new Date().toISOString()
+            };
+            
+            // Convertir a JSON
+            const dataStr = JSON.stringify(exportData, null, 2);
+            
+            // Crear un blob y descargarlo
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `mapa-creativo-${new Date().toISOString().slice(0, 10)}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Liberar el objeto URL
+            URL.revokeObjectURL(url);
+            
+            showNotification('¡Mapa exportado exitosamente!');
+        }
+
+        function importMapData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const importedData = JSON.parse(e.target.result);
+                    
+                    if (!importedData.mapData || !Array.isArray(importedData.mapData)) {
+                        throw new Error('Formato de archivo inválido');
+                    }
+                    
+                    // Limpiar el mapa actual
+                    clearMap(false);
+                    
+                    // Cargar los datos importados
+                    mapData = importedData.mapData;
+                    renderMapData(mapData);
+                    
+                    // Guardar en localStorage
+                    localStorage.setItem('mapData', JSON.stringify(mapData));
+                    
+                    showNotification('¡Mapa importado exitosamente!');
+                } catch (error) {
+                    showNotification('Error al importar el mapa: ' + error.message);
+                }
+            };
+            
+            reader.readAsText(file);
+            
+            // Resetear el input de archivo
+            event.target.value = '';
+        }
+
+        function generateStandaloneHTML() {
+            // Primero guardar los datos actuales
+            saveMapData();
+            
+            // Obtener el HTML actual
+            const htmlContent = document.documentElement.outerHTML;
+            
+            // Crear un blob y descargarlo
+            const dataBlob = new Blob([htmlContent], { type: 'text/html' });
+            const url = URL.createObjectURL(dataBlob);
+            
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `mapa-creativo-standalone-${new Date().toISOString().slice(0, 10)}.html`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            
+            // Liberar el objeto URL
+            URL.revokeObjectURL(url);
+            
+            showNotification('¡HTML autónomo generado exitosamente!');
+        }
+
+        function addHoverLogic(marker) {
+            marker.on('mouseover', function (e) { this.openPopup(); });
+            marker.on('mouseout', function (e) { this.closePopup(); });
+        }
+
+        // --- EVENTOS DEL MAPA ---
+        map.on('click', function(e) {
+            var newLayer;
+            if (currentTool === 'image') {
+                var url = imageUrlInput.value.trim();
+                var desc = imageDescInput.value.trim();
+                
+                if (!url) {
+                    showNotification('Por favor, ingresa una URL de imagen.');
+                    return;
+                }
+                
+                if (!desc) {
+                    showNotification('Por favor, ingresa una descripción para la imagen.');
+                    return;
+                }
+                
+                // Crear un icono con imagen y descripción para el mapa
+                var thumbnailIcon = L.divIcon({
+                    html: `<div class="image-thumbnail-container">
+                            <img src="${url}" alt="${desc}">
+                            <div class="description">${desc}</div>
+                           </div>`,
+                    className: 'image-thumbnail-marker',
+                    iconSize: [80, 90],
+                    iconAnchor: [40, 90]
+                });
+                
+                // Crear el contenido del popup con la imagen completa
+                var popupContent = `<div class="image-popup">
+                                    <img src="${url}" alt="${desc}">
+                                    <div class="description">${desc}</div>
+                                   </div>`;
+                
+                newLayer = L.marker(e.latlng, { icon: thumbnailIcon }).bindPopup(popupContent);
+                
+                // Resetear formulario
+                imageUrlInput.value = '';
+                imageDescInput.value = '';
+                imgPreview.style.display = 'none';
+                clearImgBtn.style.display = 'none';
+                imageUrl = null;
+                
+                deactivateAllTools();
+
+            } else if (currentTool === 'line') {
+                if (!isDrawingLine) { isDrawingLine = true; currentLinePoints = [e.latlng]; }
+                else { currentLinePoints.push(e.latlng); }
+            } else if (currentTool === 'emoji') {
+                var selectedEmoji = emojiSelect.value;
+                var emojiIcon;
+                
+                // Manejar los nuevos iconos especiales
+                if (selectedEmoji === 'beach-flag-green') {
+                    emojiIcon = L.divIcon({ 
+                        html: '<div class="beach-flag"><div class="beach-flag-green"></div></div>', 
+                        iconSize: [20, 40], 
+                        className: 'emoji-div-icon' 
+                    });
+                } else if (selectedEmoji === 'beach-flag-yellow') {
+                    emojiIcon = L.divIcon({ 
+                        html: '<div class="beach-flag"><div class="beach-flag-yellow"></div></div>', 
+                        iconSize: [20, 40], 
+                        className: 'emoji-div-icon' 
+                    });
+                } else if (selectedEmoji === 'beach-flag-red') {
+                    emojiIcon = L.divIcon({ 
+                        html: '<div class="beach-flag"><div class="beach-flag-red"></div></div>', 
+                        iconSize: [20, 40], 
+                        className: 'emoji-div-icon' 
+                    });
+                } else if (selectedEmoji === 'lifeguard') {
+                    emojiIcon = L.divIcon({ 
+                        html: '<div class="lifeguard-icon"><div class="lifeguard-buoy"></div><div class="lifeguard-person"></div></div>', 
+                        iconSize: [30, 30], 
+                        className: 'emoji-div-icon' 
+                    });
+                } else if (selectedEmoji === 'ℹ️') {
+                    emojiIcon = L.divIcon({ 
+                        html: '<div class="info-icon">i</div>', 
+                        iconSize: [30, 30], 
+                        className: 'emoji-div-icon' 
+                    });
+                } else {
+                    // Para los emojis regulares
+                    emojiIcon = L.divIcon({ 
+                        html: `<span class="emoji-icon">${selectedEmoji}</span>`, 
+                        iconSize: [30, 30], 
+                        className: 'emoji-div-icon' 
+                    });
+                }
+                
+                newLayer = L.marker(e.latlng, { icon: emojiIcon });
+                deactivateAllTools();
+            } else if (currentTool === 'police') {
+                newLayer = L.marker(e.latlng, { icon: iconoPolicia }).bindPopup('<div class="custom-popup"><h3>Edificio Policial</h3></div>');
+                addHoverLogic(newLayer);
+                deactivateAllTools();
+            } else if (currentTool === 'text') {
+                var text = textInput.value.trim(); if (!text) { showNotification('Por favor, escribe un texto para el cuadro.'); return; }
+                var textIcon = L.divIcon({
+                    html: `<div class="text-box-wrapper"><div class="text-box-icon">${text}</div></div>`,
+                    className: 'text-box-marker', iconSize: null, iconAnchor: [0, 0]
+                });
+                newLayer = L.marker(e.latlng, { icon: textIcon });
+                textInput.value = '';
+                deactivateAllTools();
+            }
+            if (newLayer) {
+                drawnItems.addLayer(newLayer);
+            }
+        });
+
+        map.on('dblclick', function(e) {
+            if (currentTool === 'line' && isDrawingLine) {
+                L.DomEvent.preventDefault(e);
+                if (currentLinePoints.length < 2) { showNotification("Una línea debe tener al menos dos puntos."); return; }
+                var color = lineColorSelect.value; var width = parseInt(lineWidthSelect.value);
+                var newLine = L.polyline(currentLinePoints, { color: color, weight: width });
+                drawnItems.addLayer(newLine);
+                if (tempLine) { map.removeLayer(tempLine); }
+                isDrawingLine = false; currentLinePoints = [];
+                deactivateAllTools();
+            }
+        });
+
+        map.on('mousemove', function(e) {
+            if (currentTool === 'line' && isDrawingLine && currentLinePoints.length > 0) {
+                if (tempLine) { map.removeLayer(tempLine); }
+                var color = lineColorSelect.value; var width = parseInt(lineWidthSelect.value);
+                tempLine = L.polyline([...currentLinePoints, e.latlng], { color: color, weight: width, dashArray: '10, 10', opacity: 0.7 }).addTo(map);
+            }
+        });
+
+        // --- CARGA AUTOMÁTICA AL INICIO ---
+        window.addEventListener('load', function() {
+            loadMapData();
+        });
+
+    </script>
+</body>
+</html>
